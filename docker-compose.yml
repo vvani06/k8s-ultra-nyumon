@@ -1,0 +1,23 @@
+version: "3.7"
+services: 
+  api:
+    build: api/
+    env_file: .env
+    ports:
+      - 3000:3000
+    volumes:
+      - ./api:/app
+  database:
+    image: postgres:12-alpine
+    ports:
+      - 5432:5432
+    volumes: 
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: db_user
+      POSTGRES_PASSWORD: password
+  kvs:
+    image: redis:6.0-rc1
+volumes:
+  postgres_data:
+    driver: local

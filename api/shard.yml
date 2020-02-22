@@ -1,0 +1,10 @@
+name: sample_project_api
+version: 1.0.0
+
+dependencies:
+  kemal:
+    github: kemalcr/kemal
+    version: ~> 0.26.1
+  redis:
+    github: stefanwille/crystal-redis
+    version: ~> 2.5.3
