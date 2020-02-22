@@ -32,7 +32,7 @@ spec:
             configMapKeyRef:
               key: REDIS_PORT
               name: api-env
-        image: api
+        image: sample_project/api:0.0.1
         name: api
         ports:
         - containerPort: 3000
