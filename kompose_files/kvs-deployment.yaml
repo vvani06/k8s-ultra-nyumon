@@ -23,6 +23,8 @@ spec:
       containers:
       - image: redis:6.0-rc1
         name: kvs
+        ports:
+        - containerPort: 6379
         resources: {}
       restartPolicy: Always
 status: {}

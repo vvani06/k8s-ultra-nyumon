@@ -414,5 +414,107 @@ for kvs failed: No address found (Redis::CannotConnectError)
 <br/>
 
 > Redis の接続エラーでアプリケーションが落ちている
-> 確かに Redis のデプロイはまだ行っていない 😇
+> 確かに Redis のデプロイはまだ行っていない :innocent:
 
+---
+
+# Redisをk8sにデプロイしたいけど
+
+```
+$ kompose convert -f docker-compose.yml
+
+INFO Kubernetes file "api-service.yaml" created   
+INFO Kubernetes file "api-deployment.yaml" created
+INFO Kubernetes file "api-env-configmap.yaml" created
+INFO Kubernetes file "kvs-deployment.yaml" created
+INFO Kubernetes file "database-service.yaml" created 
+INFO Kubernetes file "database-deployment.yaml" created
+INFO Kubernetes file "postgres-data-persistentvolumeclaim.yaml" created
+```
+
+`kompose` が `kvs-service.yaml` が出力していない :thinking:
+
+---
+
+# Redisのserviceも出したい
+
+apiサービスとの違いがポートマッピングの有無だったので、
+これを加えると出てくるのではないだろうか（雑対応）
+
+![](images/2020-02-23-02-21-41.png)
+
+---
+
+# 出た
+
+```shell
+$ kompose convert -f ../docker-compose.prod.yml
+
+INFO Kubernetes file "api-service.yaml" created
+INFO Kubernetes file "database-service.yaml" created
+INFO Kubernetes file "kvs-service.yaml" created
+INFO Kubernetes file "api-deployment.yaml" created
+INFO Kubernetes file "api-env-configmap.yaml" created
+INFO Kubernetes file "database-deployment.yaml" created
+INFO Kubernetes file "postgres-data-persistentvolumeclaim.yaml" created
+INFO Kubernetes file "kvs-deployment.yaml" created
+```
+
+デプロイした
+```shell
+$ kubectl apply -f kvs-deployment.yaml 
+deployment.extensions/kvs created
+$ kubectl apply -f kvs-service.yaml 
+service/kvs created
+```
+
+---
+
+# apiサービスの状態は変わらず
+
+```shell
+$ kubectl get pods --all-namespaces
+NAMESPACE   NAME                    READY   STATUS             RESTARTS   AGE
+default     api-7f5f4fdbf7-67nqm    0/1     CrashLoopBackOff   10         5h37m
+default     kvs-d44fc5984-vwqst     1/1     Running            0          2m27s
+```
+<br/>
+
+> 起動 -> エラー -> 再起動 -> エラー ... のループにはまったので、
+> 10回もやったしもう無理よね・・ っていう状態に見える :thinking:
+
+---
+
+# 人為的に再起動させる
+
+`kubectl` に「再起動する」みたいはものは無さそうだが・・
+雑に検索すると「レプリカ数を 0 にしてから 1以上 にすると良い」とある
+
+```shell
+$ kubectl scale deployment api --replicas=0
+deployment.extensions/api scaled
+
+$ kubectl get pods --all-namespaces
+NAMESPACE    NAME                        READY   STATUS    RESTARTS   AGE
+default      kvs-d44fc5984-vwqst         1/1     Running   0          3m37s
+...
+```
+
+---
+
+# 人為的に再起動させる
+
+```
+$ kubectl scale deployment api --replicas=1
+deployment.extensions/api scaled
+
+$ kubectl get pods --all-namespaces
+NAMESPACE    NAME                        READY   STATUS    RESTARTS   AGE
+default      api-7f5f4fdbf7-97k6k        1/1     Running   0          4s
+default      kvs-d44fc5984-vwqst         1/1     Running   0          3m52s
+...
+```
+
+apiサービスが Running になった！ :tada:
+
+<br/>
