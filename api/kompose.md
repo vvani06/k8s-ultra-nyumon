@@ -9,7 +9,8 @@ marp: true
 ---
 
 # だれ？
-allegrogiken
+@vvanitter82
+VVani / allegrogiken
 犬アバター
 
 ---
@@ -44,8 +45,10 @@ Docker Desktop インストール済み
 
 <br/>
 
-(補足) 私の環境
-- Windows 10 Pro + WSL2 + Docker Desktop
+試したときの環境
+- Windows 10 Pro + WSL2(Ubuntu) + Docker Desktop
+- Terminal 操作はすべて Ubuntu 側で実施
+- Docker CE: `v19.03.5` / Kubernetes: `v1.15.5`
 
 ---
 
@@ -95,8 +98,20 @@ docker-compose との付き合いが長いので、k8s を使うときでも doc
 
 # Kompose
 
-### https://github.com/kubernetes/kompose
-### docker-compose.yml からk8sのymlファイルを生成するCLIツール
+### docker-compose.yml からk8sのyamlファイルを生成するCLIツール
+> Kubernetes + Compose = Kompose 
+> https://kompose.io
+
+<br/>
+
+### インストール (on Ubuntu)
+※ 2020/02/20 時点の `README.md` から引用
+```shell
+$ curl -L https://github.com/kubernetes/kompose/releases/download/v1.20.0/kompose-linux-amd64 -o kompose
+
+$ chmod +x kompose
+$ sudo mv ./kompose /usr/local/bin/kompose
+```
 
 ---
 
@@ -138,12 +153,10 @@ INFO Kubernetes file "api-service.yaml" created
 INFO Kubernetes file "api-deployment.yaml" created
 INFO Kubernetes file "api-env-configmap.yaml" created
 INFO Kubernetes file "kvs-deployment.yaml" created
-INFO Kubernetes file "database-service.yaml" created 
-INFO Kubernetes file "database-deployment.yaml" created
-INFO Kubernetes file "postgres-data-persistentvolumeclaim.yaml" created
 ```
+<br/>
 
-> なんか出た
+なんか出た
 
 ---
 
@@ -160,28 +173,23 @@ $ kubectl apply -f api-service.yaml
 
 service/api created
 ```
-> いけてそう
+<br/>
+
+いけてそう
 
 ---
 
 # デプロイした結果
 
 ```shell
-$ kubectl get pods --all-namespaces
+$ kubectl get pods
 NAMESPACE       NAME                                    READY   STATUS             RESTARTS   AGE
 default         api-5948c9b999-mvz7x                    0/1     ImagePullBackOff   0          44m
-docker          compose-7b7c5cbbcc-mlv89                1/1     Running            0          47d
-docker          compose-api-dbbf7c5db-kvb57             1/1     Running            0          47d
-kube-system     coredns-5c98db65d4-7mvx4                1/1     Running            1          47d
-kube-system     coredns-5c98db65d4-nnpvm                1/1     Running            1          47d
-kube-system     etcd-docker-desktop                     1/1     Running            0          47d
-kube-system     kube-apiserver-docker-desktop           1/1     Running            0          47d
-kube-system     kube-controller-manager-docker-desktop  1/1     Running            0          47d
 ...
 ```
 <br/>
 
-> ダメそう👀👀👀
+**ダメそう 🙄🙄🙄**
 
 ---
 
@@ -193,9 +201,9 @@ default    api-5948c9b999-mvz7x    0/1     ImagePullBackOff   0          44m
 ```
 <br/>
 
-> GKE のトラブルシューティングいわく
-> https://cloud.google.com/kubernetes-engine/docs/troubleshooting?hl=ja#ImagePullBackOff
-> > ImagePullBackOff と ErrImagePull は、コンテナが使用するイメージをイメージ レジストリからロードできないことを示します。
+GKE のトラブルシューティングいわく
+https://cloud.google.com/kubernetes-engine/docs/troubleshooting?hl=ja#ImagePullBackOff
+> ImagePullBackOff と ErrImagePull は、コンテナが使用するイメージをイメージ レジストリからロードできないことを示します。
 
 ---
 
@@ -219,7 +227,7 @@ default    api-5948c9b999-mvz7x    0/1     ImagePullBackOff   0          44m
         image: api
         name: api
 ```
-> `api` という名前では docker イメージを参照できない
+`api` という名前では docker イメージを参照できない
 
 --- 
 
@@ -235,7 +243,7 @@ sample_project_api  latest    5ee77759cbd3        2 days ago     283MB
 ```
 <br/>
 
-> `image: api` を `image: sample_project_api` に変えたらいけそう
+`image: api` を `image: sample_project_api` に変えたらいけそう
 
 ---
 
@@ -246,13 +254,10 @@ $ kubectl apply -f api-deployment.yaml
 deployment.extensions/api configured
 ```
 ```shell
-$ kubectl get pods --all-namespaces
+$ kubectl get pods
 
 NAMESPACE    NAME                          READY   STATUS             RESTARTS   AGE
 default      api-5948c9b999-mvz7x          0/1     ErrImagePull       0          14s
-docker       compose-7b7c5cbbcc-mlv89      1/1     Running            0          47d
-docker       compose-api-dbbf7c5db-kvb57   1/1     Running            0          47d
-...
 ```
 <br/>
 
@@ -267,7 +272,7 @@ https://kubernetes.io/ja/docs/concepts/configuration/overview/#%E3%82%B3%E3%83%B
 
 ![](images/2020-02-22-20-12-08.png)
 
-> ローカルのコンテナイメージが `tag=latest` なのが悪そう
+ローカルのコンテナイメージが `tag=latest` なのが悪そう
 
 ---
 
@@ -301,7 +306,7 @@ api-deployment.yml
         image: sample_project/api:0.0.1
         name: api
 ```
-> コンテナイメージの値がいい感じになった(気がする)
+コンテナイメージの値がいい感じになった(気がする)
 
 ---
 
@@ -313,7 +318,7 @@ deployment.extensions/api configured
 ```
 
 ```shell
-$ kubectl get pods --all-namespaces
+$ kubectl get pods
 
 NAMESPACE         NAME                      READY   STATUS                       RESTARTS   AGE
 default           api-7f5f4fdbf7-67nqm      0/1     CreateContainerConfigError   0          13s
@@ -321,8 +326,8 @@ default           api-7f5f4fdbf7-67nqm      0/1     CreateContainerConfigError  
 ```
 <br/>
 
-> ダメっぽい、しかしSTATUSのエラーは変わった
-> イメージは参照できている模様
+ダメっぽい、しかしSTATUSのエラーは変わった
+イメージは参照できている模様
 
 ---
 
@@ -381,7 +386,7 @@ configmap/api-env created
 ...
 
 ```shell
-$ kubectl get pods --all-namespaces
+$ kubectl get pods
 
 NAMESPACE   NAME                     READY   STATUS             RESTARTS   AGE
 default     api-7f5f4fdbf7-67nqm     0/1     CrashLoopBackOff   1          5h8m
@@ -389,7 +394,7 @@ default     api-7f5f4fdbf7-67nqm     0/1     CrashLoopBackOff   1          5h8m
 ```
 <br/>
 
-> またSTATUSが変わったが、起動はできてない模様
+またSTATUSが変わったが、起動はできてない模様
 
 ---
 
@@ -413,8 +418,8 @@ for kvs failed: No address found (Redis::CannotConnectError)
 
 <br/>
 
-> Redis の接続エラーでアプリケーションが落ちている
-> 確かに Redis のデプロイはまだ行っていない :innocent:
+Redis の接続エラーでアプリケーションが落ちている
+確かに Redis のデプロイはまだ行っていない :innocent:
 
 ---
 
@@ -427,9 +432,6 @@ INFO Kubernetes file "api-service.yaml" created
 INFO Kubernetes file "api-deployment.yaml" created
 INFO Kubernetes file "api-env-configmap.yaml" created
 INFO Kubernetes file "kvs-deployment.yaml" created
-INFO Kubernetes file "database-service.yaml" created 
-INFO Kubernetes file "database-deployment.yaml" created
-INFO Kubernetes file "postgres-data-persistentvolumeclaim.yaml" created
 ```
 
 `kompose` が `kvs-service.yaml` が出力していない :thinking:
@@ -451,12 +453,9 @@ apiサービスとの違いがポートマッピングの有無だったので�
 $ kompose convert -f ../docker-compose.prod.yml
 
 INFO Kubernetes file "api-service.yaml" created
-INFO Kubernetes file "database-service.yaml" created
 INFO Kubernetes file "kvs-service.yaml" created
 INFO Kubernetes file "api-deployment.yaml" created
 INFO Kubernetes file "api-env-configmap.yaml" created
-INFO Kubernetes file "database-deployment.yaml" created
-INFO Kubernetes file "postgres-data-persistentvolumeclaim.yaml" created
 INFO Kubernetes file "kvs-deployment.yaml" created
 ```
 
@@ -473,7 +472,7 @@ service/kvs created
 # apiサービスの状態は変わらず
 
 ```shell
-$ kubectl get pods --all-namespaces
+$ kubectl get pods
 NAMESPACE   NAME                    READY   STATUS             RESTARTS   AGE
 default     api-7f5f4fdbf7-67nqm    0/1     CrashLoopBackOff   10         5h37m
 default     kvs-d44fc5984-vwqst     1/1     Running            0          2m27s
@@ -490,11 +489,18 @@ default     kvs-d44fc5984-vwqst     1/1     Running            0          2m27s
 `kubectl` に「再起動する」みたいはものは無さそうだが・・
 雑に検索すると「レプリカ数を 0 にしてから 1以上 にすると良い」とある
 
+---
+
+# レプリカ数を 0 にする
+
 ```shell
 $ kubectl scale deployment api --replicas=0
 deployment.extensions/api scaled
+```
 
-$ kubectl get pods --all-namespaces
+```shell
+$ kubectl get pods
+
 NAMESPACE    NAME                        READY   STATUS    RESTARTS   AGE
 default      kvs-d44fc5984-vwqst         1/1     Running   0          3m37s
 ...
@@ -502,19 +508,398 @@ default      kvs-d44fc5984-vwqst         1/1     Running   0          3m37s
 
 ---
 
-# 人為的に再起動させる
+# レプリカ数を元に戻す
 
-```
+```shell
 $ kubectl scale deployment api --replicas=1
 deployment.extensions/api scaled
+```
 
-$ kubectl get pods --all-namespaces
+```shell
+$ kubectl get pods
+
 NAMESPACE    NAME                        READY   STATUS    RESTARTS   AGE
 default      api-7f5f4fdbf7-97k6k        1/1     Running   0          4s
 default      kvs-d44fc5984-vwqst         1/1     Running   0          3m52s
-...
 ```
+<br/>
 
 apiサービスが Running になった！ :tada:
 
+---
+
+# 手元からアクセスしてみたい
+
+サービスの情報を見てみる
+```shell
+$ kubectl get service api kvs
+
+NAME   TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+api    ClusterIP   10.104.4.109     <none>        3000/TCP   22h
+kvs    ClusterIP   10.102.147.186   <none>        6379/TCP   13h
+```
 <br/>
+
+この状態でブラウザから `CLUSTER-IP` に対してアクセスしても応答が無い :thinking:
+
+```shell
+$ curl 10.104.4.109:3000
+
+curl: (7) Failed to connect to 10.104.4.109 port 3000: Connection timed out
+``` 
+
+---
+
+# ServiceSpec: type=ClusterIP とは
+
+k8s公式チュートリアルの「Serviceを使ったアプリケーションの公開」
+https://kubernetes.io/ja/docs/tutorials/kubernetes-basics/expose/expose-intro/
+> ```
+> ClusterIP (既定値)
+> 
+> クラスター内の内部IPでServiceを公開します。
+> この型では、Serviceはクラスター内からのみ到達可能になります。
+> ```
+
+#### おそらく・・
+- サービスの設定で `type` を省略すると `ClusterIP` になるっぽい
+- `ClusterIP` のサービス単体では外部への公開ができないっぽい
+- `ClusterIP` のサービス同士での通信はできているっぽい `(api <=> kvs)`
+
+---
+
+# ServiceSpec: type=NodePort
+
+さっきのURLと同じページにある
+> ```
+> NodePort
+> 
+> NATを使用して、クラスター内の選択された各ノードの同じポートにServiceを公開します。
+> <NodeIP>:<NodePort>を使用してクラスターの外部からServiceにアクセスできるようにします。
+> これはClusterIPのスーパーセットです。
+> ```
+<br/>
+
+これ使ったらできそうな予感がする（雑な感覚）
+
+---
+
+# NodePort を使ってみる (1)
+
+api-service.yaml の `spec` に `type: NodePort` だけ追記
+```diff
+ spec:
++  type: NodePort
+   ports:
+     name: "3000"
+     port: 3000
+     targetPort: 3000
+   selector:
+     io.kompose.service: api
+```
+---
+
+# NodePort を使ってみる (2)
+
+```shell
+$ kubectl apply -f api-service.yaml
+service/api configured
+```
+
+```
+$ kubectl get service api kvs
+
+NAME   TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE
+api    NodePort    10.104.4.109     <none>        3000:31690/TCP   22h
+kvs    ClusterIP   10.102.147.186   <none>        6379/TCP         14h
+```
+<br/>
+
+ポートが `3000:31690` となっている
+ノード側のポートは自動で空いてるとこをマッピングしてくれてる感じ
+
+---
+
+# アクセスしてみる
+
+```shell
+$ curl localhost:30000
+
+Hello World! #1⏎
+```
+
+#### できた！ :tada:
+
+---
+
+# アクセスしてみる
+
+```shell
+$ curl localhost:30000
+
+Hello World! #1⏎
+```
+
+#### できた！ :tada:
+
+---
+
+# (なんとなく)カイゼン
+
+#### :one: kompose で生成されたファイルを弄らず `kubectl apply` したい
+- できるだけ docker-compose.yml を軸としたい
+- 今回書き換えたのは Service の `type: NodePort` だけ
+#### :two: `namespace: default` を変更したい
+- `default` のままだと他の何かを試したときに混ざる予感がする
+- docker-compose では作業ディレクトリをもとにいい感じのグルーピングがはたくので、それと同じ感じにできたらいいな
+
+---
+
+# kompose の生成ファイルを弄らずデプロイしたい (1)
+
+kompose のユーザーガイドを見ると、いい感じの記述がある
+https://github.com/kubernetes/kompose/blob/master/docs/user-guide.md
+
+> ### Labels
+> kompose supports Kompose-specific labels within the docker-compose.yml file to explicitly define the generated resources' behavior upon conversion, like Service, PersistentVolumeClaim...
+
+---
+# kompose の生成ファイルを弄らずデプロイしたい (2)
+
+docker-compose.yml に `label` を書き加えてみよう
+
+```diff
+ services: 
+   api:
+     image: sample_project/api:0.0.1
+     build: 
+       context: ./api
+     env_file: .env
+     ports:
+       - 3000
+     volumes:
+       - ./api:/app
++    labels:
++      kompose.service.type: nodeport
+ ...
+```
+---
+# kompose の生成ファイルを弄らずデプロイしたい (3)
+
+```shell
+$ kompose convert -f docker-compose.yml
+
+INFO Kubernetes file "api-service.yaml" created 
+...  
+```
+
+api-service.yaml
+```yml
+  spec:
+    ports:
+    - name: "3000"
+      port: 3000
+      targetPort: 3000
+    selector:
+      io.kompose.service: api
+    type: NodePort
+```
+さきほど手で修正したやつと同じ内容になった :+1:
+
+---
+
+# (なんとなく)カイゼン
+
+#### :white_check_mark: ~~kompose で生成されたファイルを弄らず `kubectl apply` したい~~
+- ~~できるだけ docker-compose.yml を軸としたい~~
+- ~~今回書き換えたのは Service の `type: NodePort` だけ~~
+#### :two: `namespace: default` を変更したい
+- `default` のままだと他の何かを試したときに混ざる予感がする
+- docker-compose では作業ディレクトリをもとにいい感じのグルーピングがはたくので、それと同じ感じにできたらいいな
+
+---
+
+# `namespace: default` を変更したい
+
+公式のマニュアルに書いてある
+https://kubernetes.io/ja/docs/concepts/overview/working-with-objects/namespaces/
+<br/>
+
+- :one: `kubectl apply` する際に `-n $NAMESPACE` で指定する
+  - `-n` を省略した際の namespace が `default` になっている
+
+- :two: 省略時の namespace を変更することもできるみたい
+
+---
+
+# `namespace: default` を変更したい
+
+やってみる
+```shell
+$ kubectl create namespace sample-project
+namespace/sample-project created
+$ kubectl apply -f api-env-configmap.yaml -n sample-project
+configmap/api-env created
+$ kubectl apply -f kvs-deployment.yaml -n sample-project
+deployment.extensions/kvs created
+$ kubectl apply -f api-deployment.yaml -n sample-project
+deployment.extensions/api created
+$ kubectl apply -f kvs-service.yaml -n sample-project
+service/kvs created
+$ kubectl apply -f api-service.yaml  -n sample-project
+service/api created
+```
+ちょっとめんどいけど、ここは愚直に・・
+
+---
+
+# `namespace: default` を変更したい
+
+```shell
+$ kubectl get pods -n sample-project
+
+NAME                   READY   STATUS    RESTARTS   AGE
+api-7f497f79cf-jzjw9   1/1     Running   0          67s
+kvs-d44fc5984-22cnq    1/1     Running   0          8m48s
+```
+```
+$ kubectl get service -n sample-project
+
+NAME   TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)          AGE
+api    NodePort    10.101.83.11   <none>        3000:31414/TCP   79s
+kvs    ClusterIP   10.96.105.90   <none>        6379/TCP         3m43s
+```
+
+```shell
+$ curl localhost:31414
+Hello World! #1⏎
+```
+`default` とは別の名前空間で別のモノとしてデプロイできた :+1:
+
+---
+
+# `namespace: default` を変更したい
+
+`default` も `sample-project` も動いている様子
+```shell
+$ kubectl get pods --all-namespaces
+
+NAMESPACE                NAME                       READY      STATUS    RESTARTS   AGE     
+default                  api-7f5f4fdbf7-97k6k       1/1        Running   2          23h     
+default                  kvs-d44fc5984-vwqst        1/1        Running   0          23h     
+sample-project           api-7f497f79cf-jzjw9       1/1        Running   0          3h8m    
+sample-project           kvs-d44fc5984-22cnq        1/1        Running   0          3h15m   
+...
+```
+
+せっかくなので `default` 側に作ってしまったモノをお掃除しよう
+```shell
+$ kubectl delete service kvs api
+service "kvs" deleted
+service "api" deleted
+
+$ kubectl delete deployment kvs api
+deployment.extensions "api" deleted
+deployment.extensions "kvs" deleted
+```
+
+---
+
+# `namespace: default` を変更したい
+
+kompose 側の情報も眺めてみる..
+
+```shell
+$ kompose
+
+Kompose is a tool to help users who are familiar with docker-compose move to Kubernetes.
+
+Usage:
+  kompose [command]
+
+Available Commands:
+  completion  Output shell completion code
+  convert     Convert a Docker Compose file
+  down        Delete instantiated services/deployments from kubernetes
+  help        Help about any command
+  up          Deploy your Dockerized application to a container orchestrator.
+  version     Print the version of Kompose
+```
+
+**up, down** というコマンドが見える
+
+---
+
+# `namespace: default` を変更したい
+
+### kompose up の usage を見てみる
+
+```shell
+$ kompose up --help
+
+Deploy your Dockerized application to a container orchestrator. (default "kubernetes")
+
+Usage:
+  kompose up [flags]
+
+OpenShift Flags:
+      --build-branch             Specify repository branch to use for buildconfig (default is current branch name)
+      --build-repo               Specify source repository for buildconfig (default is current branch's remote url)
+      --insecure-repository      Specify to use insecure docker repository while generating Openshift image stream object
+
+Flags:
+      --build string        Set the type of build ("local"|"build-config" (OpenShift only)|"none") (default "local")
+      --controller string   Set the output controller ("deployment"|"daemonSet"|"replicationController")
+  -h, --help                help for up
+      --namespace string    Specify Namespace to deploy your application (default "default")
+      --push-image          If we should push the docker image we built (default true)
+```
+namespaceを指定しつつ、`docker-compose up` のノリで使えそうな雰囲気 :thinking:
+
+---
+
+# `namespace: default` を変更したい
+
+### kompose up をやってみる
+
+```shell
+$ kompose up -f docker-compose.prod.yml --namespace=sample-project --push-image=false
+
+INFO Build key detected. Attempting to build image 'sample_project/api:0.0.1' 
+INFO Building image 'sample_project/api:0.0.1' from directory 'api' 
+INFO Image 'sample_project/api:0.0.1' from directory 'api' built successfully 
+INFO We are going to create Kubernetes Deployments, Services and PersistentVolumeClaims for
+your Dockerized application. If you need different kind of resources, use the 'kompose convert
+and 'kubectl create -f' commands instead. 
+
+INFO Deploying application in "sample-project" namespace 
+FATA Error while deploying application: the server could not find the requested resource (post services)
+```
+
+エラー出た 🙄🙄
+
+---
+
+# `namespace: default` を変更したい
+
+https://github.com/kubernetes/kompose/issues/1238
+
+![height:400px](images/2020-02-23-23-17-34.png)
+
+次のリリース(おそらく近日)でなおる予感
+master をビルドしたやつだと動くらしい？（未検証）
+
+---
+
+# 注意点
+
+- 変換済み yaml の `apiVersion` が現時点で古い？
+  - Deployment が `extensions/v1beta1` で出るが、k8s v1.16 以降で非推奨
+
+- `docker-compose.yml` のサポートバージョンが `3.2` まで
+  - `3.7` とかのファイルを拒絶するわけではないっぽい
+
+- そのまま本番環境で使えるわけではない
+  - 特に外部公開に `NodePort` を使っているあたり
+  - 本番ではロードバランサ―を使うのが推奨っぽい
+
