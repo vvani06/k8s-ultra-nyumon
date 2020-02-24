@@ -2,7 +2,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   annotations:
-    kompose.cmd: kompose convert -f ../docker-compose.prod.yml
+    kompose.cmd: kompose convert -f ../docker-compose.yml
     kompose.service.type: nodeport
     kompose.version: 1.20.0 (f3d54d784)
   creationTimestamp: null
@@ -15,7 +15,7 @@ spec:
   template:
     metadata:
       annotations:
-        kompose.cmd: kompose convert -f ../docker-compose.prod.yml
+        kompose.cmd: kompose convert -f ../docker-compose.yml
         kompose.service.type: nodeport
         kompose.version: 1.20.0 (f3d54d784)
       creationTimestamp: null

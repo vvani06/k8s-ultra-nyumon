@@ -1,17 +1,24 @@
-FROM crystallang/crystal:0.33.0-alpine-build as builder
+FROM crystallang/crystal:0.33.0-alpine-build AS dev
 
 RUN mkdir /app
-ADD . /app
 WORKDIR /app
 
+ADD ["./shard.yml", "./shard.lock", "./"]
 RUN shards install
-RUN crystal build --release src/main.cr
 
 # -----------------
 
-FROM crystallang/crystal:0.33.0-alpine
+FROM dev AS builder
 
-WORKDIR /root/
+WORKDIR /app
+ADD ./ .
+RUN crystal build src/main.cr --release --static
+
+# -----------------
+
+FROM busybox
+
+WORKDIR /root
 COPY --from=builder /app/main .
 
 CMD ["./main"]
