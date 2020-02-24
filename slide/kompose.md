@@ -1072,10 +1072,11 @@ namespace "sample-project" deleted
 
 # 感想
 
-### 体験として
+### 体験として..
 
 - **docker-compose.yml からわりとシームレスに k8s に入門できた**
   - `kompose` はそれを助けるのに十分なツールだった
+  - yaml を書き始めるハードルはそこそこ下がる
 <br/>
 - **k8s を意識して docker-compose.yml を書くことができた**
   - 「開発環境として」の運用だと、自前コンテナの名前・タグをあまり意識しないと思うが、**意識すると (k8sに関わらず) 本番向けにコンテナを使う機運が高まるはず**
@@ -1084,7 +1085,7 @@ namespace "sample-project" deleted
 
 # 感想
 
-### 実用面を考えると
+### 実用面を考えると..
 
 - 普段使いの開発環境として k8s を継続的に使っていくメリットは薄そう
   - 特にフロントエンド・動的型付けなスクリプト言語の開発において、HMR(`Hot Module Replacement`) を使うなら `docker-compose` で ホスト:コンテナ間をボリュームマウントする方が楽に見える
@@ -1093,7 +1094,6 @@ namespace "sample-project" deleted
 - ネットワーク周りを意識する必要が生まれるのは悪くない
   - 本番環境を作るときでも「構成」のイメージができているはず
   - その分ハードルは上がるけど..
-
 
 ---
 
@@ -1110,6 +1110,9 @@ namespace "sample-project" deleted
   - 特に外部公開に `NodePort` を使っているあたり
   - 本番ではロードバランサ―を使うのが推奨っぽい
   - 本番運用まで考えるならしっかり本を読みましょう
+---
+
+# ご清聴ありがとうございました
 
 ---
 
@@ -1142,7 +1145,7 @@ Available Commands:
 
 ---
 
-# `namespace: default` を変更したい
+# kompose up/down
 
 ### kompose up の usage を見てみる
 
@@ -1170,7 +1173,7 @@ namespaceを指定しつつ、`docker-compose up` のノリで使えそうな雰
 
 ---
 
-# `namespace: default` を変更したい
+# kompose up/down
 
 ### kompose up をやってみる
 
@@ -1192,7 +1195,7 @@ FATA Error while deploying application: the server could not find the requested 
 
 ---
 
-# `namespace: default` を変更したい
+# kompose up/down
 
 https://github.com/kubernetes/kompose/issues/1238
 
