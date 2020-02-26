@@ -64,6 +64,16 @@ Docker Desktop インストール済み
 
 ---
 
+# 読んでいる本
+
+![height:480px](images/2020-02-26-22-07-01.png)![height:480px](images/2020-02-26-22-07-24.png)
+
+---
+
+# ここから本文
+
+---
+
 # よくあるWEBアプリケーション
 
 今回用のサンプルプロジェクト
@@ -72,6 +82,7 @@ Docker Desktop インストール済み
   - 個人的な趣味を兼ねて `crystal` という Ruby 風の静的型付け言語で作成
 - redis
 - データベース(今回は省略)
+- 「開発環境/CI 向け」に Dockerfile / docker-compose.yml を書いている
 
 ---
 
@@ -123,6 +134,7 @@ services:
 # .env
 
 docker-compose.yml でサービスに対して設定できる環境変数群
+サービスに対して設定できるほか、 `docker-compose.yml` への展開もできる
 
 ```ini
 REDIS_HOST=kvs
@@ -138,6 +150,9 @@ $ docker-compose up -d
 Starting sample_project_kvs_1 ... done
 Starting sample_project_api_1 ... done
 ```
+
+<br/>
+
 ```shell
 $ docker-compose ps
         Name                      Command               State            Ports
