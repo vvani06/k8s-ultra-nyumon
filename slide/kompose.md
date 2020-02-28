@@ -95,7 +95,8 @@ Docker Desktop インストール済み
 - 「開発環境/CI 向け」に Dockerfile / docker-compose.yml を書いている
 
 <br/>
-データベースはモロモロの都合で省略 😇
+
+データベースはモロモロの都合で省略 :innocent:
 
 ---
 
@@ -407,7 +408,7 @@ https://kubernetes.io/ja/docs/concepts/configuration/overview/#%E3%82%B3%E3%83%B
 
 ---
 
-# `docker-compose build` でタグを付ける
+# `docker-compose.yml` でタグを付ける
 
 `docker-compose build` でビルドする時にイメージ名・タグを指定できる
 http://docs.docker.jp/compose/compose-file.html#build
@@ -432,7 +433,30 @@ http://docs.docker.jp/compose/compose-file.html#build
 
 ---
 
-# 改めて kompose 
+# タグをつけて docker-compose build
+
+```shell
+$ docker-compose build                                                                 
+
+kvs uses an image, skipping
+Building api
+...(中略)...
+
+Successfully built 12a0b15e0dcf
+Successfully tagged sample_project/api:0.0.1
+```
+
+```shell
+$ docker image ls sample_project/api
+
+REPOSITORY           TAG                 IMAGE ID            CREATED             SIZE  
+sample_project/api   0.0.1               12a0b15e0dcf        43 hours ago        17.4MB
+```
+**イメージ名:タグ付きでビルドができた**
+
+---
+
+# 続いて kompose 
 
 api-deployment.yml
 ```yml
@@ -456,7 +480,7 @@ api-deployment.yml
 
 ---
 
-# さらにReデプロイ
+# 改めてデプロイ
 
 ```shell
 $ kubectl apply -f api-deployment.yaml                                                     
@@ -473,6 +497,7 @@ default      api-7f5f4fdbf7-67nqm   0/1     CreateContainerConfigError   0      
 
 **ダメっぽい、しかしSTATUSのエラーは変わった**
 イメージは参照できている模様
+`CreateContainerConfigError` なるほど
 
 ---
 
@@ -526,6 +551,7 @@ api-deployment.yml に `configMapKeyRef` というものが見えている
 $ kubectl apply -f api-env-configmap.yaml                                              
 configmap/api-env created
 ```
+<br/>
 
 ```shell
 $ kubectl get pods
@@ -540,12 +566,6 @@ default     api-7f5f4fdbf7-67nqm     0/1     CrashLoopBackOff   1          5h8m
 ---
 
 # ログを見る
-
-```shell
-$ kubectl apply -f api-env-configmap.yaml 
-configmap/api-env created
-```
-...
 
 ```shell
 $ kubectl logs api-7f5f4fdbf7-67nqm
@@ -808,9 +828,9 @@ Hello World! #2⏎
 #### :one: kompose で生成されたファイルを弄らず `kubectl apply` したい
 - できるだけ docker-compose.yml を軸としたいというわがまま
 - 今回書き換えたのは Service の `type: NodePort` だけ
-#### :two: `namespace: default` を変更したい
-- `default` のままだと他の何かを試したときに混ざる予感がする
-- docker-compose では作業ディレクトリをもとにいい感じのグルーピングがはたくので、それと同じ感じにできたらいいな
+#### :two: docker-compose 同様にグルーピングしたい
+- 今のままだと他の何かを試したときに混ざる予感がする
+- docker-compose では作業ディレクトリをもとにいい感じのグルーピングが働くので、それと同じ感じにできたらいいな
 
 ---
 
@@ -875,15 +895,15 @@ api-service.yaml
 #### :white_check_mark: ~~kompose で生成されたファイルを弄らず `kubectl apply` したい~~
 - ~~できるだけ docker-compose.yml を軸としたい~~
 - ~~今回書き換えたのは Service の `type: NodePort` だけ~~
-#### :two: `namespace: default` を変更したい
-- `default` のままだと他の何かを試したときに混ざる予感がする
-- docker-compose では作業ディレクトリをもとにいい感じのグルーピングがはたくので、それと同じ感じにできたらいいな
+#### :two: docker-compose 同様にグルーピングしたい
+- 今のままだと他の何かを試したときに混ざる予感がする
+- docker-compose では作業ディレクトリをもとにいい感じのグルーピングが働くので、それと同じ感じにできたらいいな
 
 ---
 
-# 全体に namespace をつけたい (1)
+# docker-compose 同様にグルーピングしたい (1)
 
-公式の docs に書いてある
+namespaceという概念を使うとうまくきそう、公式の docs に書いてある
 https://kubernetes.io/ja/docs/concepts/overview/working-with-objects/namespaces/
 <br/>
 
@@ -896,7 +916,7 @@ https://kubernetes.io/ja/docs/concepts/overview/working-with-objects/namespaces/
 
 ---
 
-# 全体に namespace をつけたい (2)
+# docker-compose 同様にグルーピングしたい (2)
 
 やってみる
 ```shell
@@ -917,7 +937,7 @@ service/api created
 
 ---
 
-# 全体に namespace をつけたい (3)
+# docker-compose 同様にグルーピングしたい (3)
 
 ```shell
 $ kubectl get pods -n sample-project
@@ -942,7 +962,7 @@ Hello World! #1⏎
 
 ---
 
-# 全体に namespace をつけたい (4)
+# docker-compose 同様にグルーピングしたい (4)
 
 `default` も `sample-project` も動いている様子
 ```shell
@@ -969,7 +989,7 @@ deployment.extensions "kvs" deleted
 
 ---
 
-# 全体に namespace をつけたい (5)
+# docker-compose 同様にグルーピングしたい (5)
 
 `namespace` 自体を消すと中にあるやつが一気に消えてくれるみたい
 ```shell
